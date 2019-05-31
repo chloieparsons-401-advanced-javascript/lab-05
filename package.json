@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint **/*.js",
-    "test": "jest --coverage --verbose",
-    "test-watch": "jest --watchAll --coverage --verbose"
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",

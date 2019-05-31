@@ -2,6 +2,14 @@
 
 const fs = require('fs');
 
+const fileTypeOffset = 0;
+const fileSizeOffset = 2;
+const pixelOffset = 10;
+const widthOffset = 18;
+const heightOffset = 22;
+const bytesPerPixelOffset = 28;
+const colorTableOffset = 54;
+
 /**
  * Bitmap -- receives a file name, used in the transformer to note the new buffer
  * @param filePath
@@ -17,8 +25,13 @@ function Bitmap(filePath) {
  */
 Bitmap.prototype.parse = function(buffer) {
   this.buffer = buffer;
-  this.type = buffer.toString('utf-8', 0, 2);
-  //... and so on
+  this.type = buffer.toString('utf-8', fileTypeOffset, 2);
+  this.fileSize = buffer.readInt32LE(fileSizeOffset);
+  this.pixelsOff = buffer.readInt32LE(pixelOffset);
+  this.width = buffer.readInt32LE(widthOffset);
+  this.height = buffer.readInt32LE(heightOffset);
+  this.bytesPerPixelOff = buffer.readInt32LE(bytesPerPixelOffset);
+  this.colorArray = buffer.slice(colorTableOffset, this.pixelsOff);
 };
 
 /**
@@ -41,15 +54,36 @@ const transformGreyscale = (bmp) => {
 
   console.log('Transforming bitmap into greyscale', bmp);
 
-  //TODO: Figure out a way to validate that the bmp instance is actually valid before trying to transform it
+  if (!this.colorArray.length){
+    throw 'Invalid .bmp format';
 
-  //TODO: alter bmp to make the image greyscale ...
+  } else {
 
+    for(let i = 0; i < bmp.colorArray.length; i += 4){
+      let grey = (bmp.colorArray[i] + bmp.colorArray[i+1] + bmp.colorArray[i+2]) / 3;
+      bmp.colorArray[i] = grey;
+      bmp.colorArray[i+1] = grey;
+      bmp.colorArray[i+2] = grey;
+    }
+  }
 };
 
 const doTheInversion = (bmp) => {
-  bmp = {};
-}
+
+  console.log('Transforming bitmap to multiply color', bmp);
+
+  if (!this.colorArray.length){
+    throw 'Invalid .bmp format';
+
+  } else {
+    for(let i = 0; i < bmp.colorArray.length; i += 4){
+      bmp.colorArray[i] *= color.colorArray[i];
+      bmp.colorArray[i+1] *= color.colorArray[i+1];
+      bmp.colorArray[i+2] *= color.colorArray[i+2];
+    }
+  }
+};
+
 
 /**
  * A dictionary of transformations
@@ -57,7 +91,7 @@ const doTheInversion = (bmp) => {
  */
 const transforms = {
   greyscale: transformGreyscale,
-  invert: doTheInversion
+  invert: doTheInversion,
 };
 
 // ------------------ GET TO WORK ------------------- //
@@ -89,7 +123,16 @@ function transformWithCallbacks() {
 // TODO: Explain how this works (in your README)
 const [file, operation] = process.argv.slice(2);
 
-let bitmap = new Bitmap(file);
+  let bitmap = new Bitmap(file);
 
-transformWithCallbacks();
+  transformWithCallbacks();
+
+// const greyscale = require('./assets/baldy.greyscale');
+
+//   greyscale(this);
+
+// fs.writeFile('baldy.greyscale.bmp', this.buffer, (err) => {
+//   if(err) throw err;
+//   console.log('success!');
+// }); 
 
